@@ -8,6 +8,10 @@ const authRouter = express.Router();
 
 authRouter.post(
     '/registration',
+    body('email').isEmail(),
+    body('password').isLength({ min: 5, max: 16 }),
+    body('name').optional().isString(),
+    body('role').optional().custom(isUserRole).withMessage('role must be "admin" or "user"'),
     AuthController.registration,
 );
 
