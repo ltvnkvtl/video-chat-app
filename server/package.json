@@ -4,7 +4,13 @@
   "description": "Video chat app. Client + Server sides.",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx rimraf dist/ && npx tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev src/index.ts",
+    "tslint:check": "tslint-config-prettier-check ./tslint.json",
+    "tslint:fix": "tslint-config-prettier-check ./tslint.json --fix",
+    "format:check": "prettier --check \"src/**{.ts,.js,.json}\"",
+    "format:fix": "prettier --write \"src/**{.ts,.js,.json}\""
   },
   "keywords": [
     "Express",
