@@ -1,5 +1,7 @@
-import express from 'express';
+import { Server } from "./server";
 
-const app = express();
+const server = new Server();
 
-app.listen(5000, () => console.log(`Server started on port ${5000}`));
+server.listen(port => {
+  console.log(`Server is listening on http://localhost:${port}`);
+});

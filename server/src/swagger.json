@@ -1,0 +1,463 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "Swagger HW-6 Application API for Node.js course",
+        "description": "Swagger HW-6 Application API for Node.js course",
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "host": "localhost:3030",
+    "basePath": "/api",
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "API for auth. Registration, Login, Logout. Token logic is here"
+        },
+        {
+            "name": "Users",
+            "description": "API for users. Get All, Get One, Update, Delete"
+        }
+    ],
+    "securityDefinitions": {
+        "refreshToken": {
+            "type": "apiKey",
+            "name": "refreshToken",
+            "in": "header"
+        }
+    },
+    "schemes": ["http"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+    "paths": {
+        "/auth/registration": {
+            "post": {
+                "tags": ["Auth"],
+                "summary": "Register (create) new User",
+                "description": "Register (create) new User",
+                "parameters": [
+                    {
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "description": "Post body to register user. Role can be 'user' or 'admin'. Default role is 'user'. Email and Password required",
+                        "schema": {
+                            "type": "object",
+                            "required": ["email", "password"],
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "role": {
+                                    "type": "string",
+                                    "default": "user"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "User is created",
+                        "schema": {
+                            "$ref": "#/definitions/UserWithTokens"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Registration returns a cookie named `refreshToken`. You need to include this cookie in logout and refresh request",
+                                "example": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxOWJiZjM4YTc2YmM2NDRlZWIyMGJlNSIsImVtYWlsIjoiYWRtaW5AbWFpbC5ydSIsInJvbGUiOiJhZG1pbiIsIm5hbWUiOiJBZG1pbiIsImlhdCI6MTYzNzYyMTUyMywiZXhwIjoxNjQwMjEzNTIzfQ.DQ9sYnAI8KfjVhBWS9yBrjquXvYrULlqT53FAsFnOGI"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. Validation errors. User Already exist",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Необработанная ошибка",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": ["Auth"],
+                "summary": "Login with email and password",
+                "description": "Login with email and password",
+                "parameters": [
+                    {
+                        "name": "Credentials",
+                        "in": "body",
+                        "required": true,
+                        "description": "Email and Password to login. Required",
+                        "schema": {
+                            "type": "object",
+                            "required": ["email", "password"],
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Successful login",
+                        "schema": {
+                            "$ref": "#/definitions/UserWithTokens"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Registration returns a cookie named `refreshToken`. You need to include this cookie in logout and refresh request",
+                                "example": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxOWJiZjM4YTc2YmM2NDRlZWIyMGJlNSIsImVtYWlsIjoiYWRtaW5AbWFpbC5ydSIsInJvbGUiOiJhZG1pbiIsIm5hbWUiOiJBZG1pbiIsImlhdCI6MTYzNzYyMTUyMywiZXhwIjoxNjQwMjEzNTIzfQ.DQ9sYnAI8KfjVhBWS9yBrjquXvYrULlqT53FAsFnOGI"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. Validation errors. User not found. Wrong password",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Необработанная ошибка",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": ["Auth"],
+                "summary": "Logout. ENTER refreshToken HERE(Click lock icon) ------------------------------------------------------->",
+                "description": "Logout will delete refreshToken from DB",
+                "security": [
+                    {
+                        "refreshToken": []
+                    }
+                ],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "Successful logout",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "Success"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": ["Users"],
+                "summary": "Get all users",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "JWT accessToken of user",
+                        "schema": {
+                            "type": "string",
+                            "format": "jwt",
+                            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6InVzZXIiLCJuYW1lIjoiTWFrcyIsImlhdCI6MTYzNjQ2ODgxOCwiZXhwIjoxNjM2NDk3NjE4fQ.itzJ5I0PSyJ9D_-quPPdbNbSnzmUS09WhWVoAUNabWI"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/UserDB"
+                        }
+                    },
+                    "401": {
+                        "description": "User is not authorized",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "User is not authorized"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Users not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Users"],
+                "summary": "Edit user",
+                "description": "Edit user",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "description": "JWT accessToken of user",
+                        "schema": {
+                            "type": "string",
+                            "format": "jwt",
+                            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6InVzZXIiLCJuYW1lIjoiTWFrcyIsImlhdCI6MTYzNjQ2ODgxOCwiZXhwIjoxNjM2NDk3NjE4fQ.itzJ5I0PSyJ9D_-quPPdbNbSnzmUS09WhWVoAUNabWI"
+                        }
+                    },
+                    {
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "description": "Post body to edit user. id is required.",
+                        "schema": {
+                            "type": "object",
+                            "required": ["id"],
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "role": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "User updated",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "401": {
+                        "description": "User is not authorized",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "User is not authorized"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "description": "id of user that we want to find or delete",
+                    "type": "string"
+                },
+                {
+                    "name": "Authorization",
+                    "in": "header",
+                    "required": true,
+                    "description": "JWT accessToken of user",
+                    "schema": {
+                        "type": "string",
+                        "format": "jwt",
+                        "example": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6InVzZXIiLCJuYW1lIjoiTWFrcyIsImlhdCI6MTYzNjQ2ODgxOCwiZXhwIjoxNjM2NDk3NjE4fQ.itzJ5I0PSyJ9D_-quPPdbNbSnzmUS09WhWVoAUNabWI"
+                    }
+                }
+            ],
+            "get": {
+                "tags": ["Users"],
+                "summary": "Get user with given ID",
+                "responses": {
+                    "200": {
+                        "description": "User is found",
+                        "schema": {
+                            "$ref": "#/definitions/UserDB"
+                        }
+                    },
+                    "401": {
+                        "description": "User is not authorized",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "User is not authorized"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete user with given ID. Only admins with accessToken token can delete User.",
+                "tags": ["Users"],
+                "responses": {
+                    "200": {
+                        "description": "User is deleted",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    },
+                    "401": {
+                        "description": "User is not authorized",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "User is not authorized"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user does not have permission to access",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "The user does not have permission to access"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "User not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "User": {
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "uniqueItems": true
+                },
+                "email": {
+                    "type": "string",
+                    "uniqueItems": true
+                },
+                "role": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "UserWithTokens": {
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/User"
+                }
+            }
+        },
+        "Error": {
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
+        },
+        "UserDB": {
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "uniqueItems": true
+                },
+                "email": {
+                    "type": "string",
+                    "uniqueItems": true
+                },
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
