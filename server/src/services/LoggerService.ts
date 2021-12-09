@@ -1,36 +1,35 @@
 export class LoggerService {
-  constructor(public socket: any) {
-  }
+    constructor(public socket: any) {}
 
-  public log(...args: any[]): void {
-    var array = ['Message from server:'];
-    array.push.apply(array, args);
-    console.log.apply(console, args);
+    public log(...args: any[]): void {
+        var array = ['Message from server:'];
+        array.push.apply(array, args);
+        console.log.apply(console, args);
 
-    this.socket.emit('log', array);
-  }
+        this.socket.emit('log', array);
+    }
 
-  public warn(...args: any[]): void {
-    var array = ['Message from server:'];
-    array.push.apply(array, args);
-    console.warn.apply(console, args);
+    public warn(...args: any[]): void {
+        var array = ['Message from server:'];
+        array.push.apply(array, args);
+        console.warn.apply(console, args);
 
-    this.socket.emit('warn', array);
-  }
+        this.socket.emit('warn', array);
+    }
 
-  public error(...args: any[]): void {
-    var array = ['Message from server:'];
-    array.push.apply(array, args);
-    console.error.apply(console, args);
+    public error(...args: any[]): void {
+        var array = ['Message from server:'];
+        array.push.apply(array, args);
+        console.error.apply(console, args);
 
-    this.socket.emit('error', array);
-  }
+        this.socket.emit('error', array);
+    }
 
-  public debug(...args: any[]): void {
-    var array = ['Message from server:'];
-    array.push.apply(array, args);
-    console.debug.apply(console, args);
+    public debug(...args: any[]): void {
+        var array = ['Message from server:'];
+        array.push.apply(array, args);
+        console.debug.apply(console, args);
 
-    this.socket.emit('debug', array);
-  }
+        this.socket.emit('debug', array);
+    }
 }

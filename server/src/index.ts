@@ -1,5 +1,5 @@
-import { Server } from "./server";
-import {ServerOptions} from "socket.io";
+import { Server } from './server';
+import { ServerOptions } from 'socket.io';
 
 // const socketConfig: Partial<ServerOptions> = {
 //   "force new connection": true,
@@ -12,5 +12,5 @@ import {ServerOptions} from "socket.io";
 const server = new Server();
 
 server.listen(port => {
-  console.log(`Server is listening on http://localhost:${port}`);
+    console.log(`Server is listening on http://localhost:${port}`);
 });
