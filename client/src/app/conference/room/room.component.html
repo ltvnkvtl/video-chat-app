@@ -5,9 +5,7 @@
       [opened]="true">
     <mat-toolbar>Menu</mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item href="#">Link 1</a>
-      <a mat-list-item href="#">Link 2</a>
-      <a mat-list-item href="#">Link 3</a>
+      <a *ngFor="let user of users" mat-list-item (click)="callUser(user)">{{ user }}</a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
@@ -15,10 +13,7 @@
       <span>client</span>
     </mat-toolbar>
     <!-- Add Content Here -->
-    <video #localVideo autoplay></video>
+    <video #localVideo autoplay [volume]="0"></video>
     <video #remoteVideo autoplay></video>
-    1<pre>{{ socket.clients | json }}</pre>
-    2<pre>{{ socket.peerMediaElements | json }}</pre>
-    3<pre>{{ socket.localMediaStream | json }}</pre>
   </mat-sidenav-content>
 </mat-sidenav-container>

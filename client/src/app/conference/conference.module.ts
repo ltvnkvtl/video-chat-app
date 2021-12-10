@@ -8,7 +8,6 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import {ConferenceRoutingModule} from "./conference-routing.module";
-import {SocketService} from "../services/socket.service";
 import { RoomsComponent } from './rooms/rooms.component';
 import {MatCardModule} from "@angular/material/card";
 
@@ -27,6 +26,6 @@ import {MatCardModule} from "@angular/material/card";
     ConferenceRoutingModule,
     MatCardModule,
   ],
-  providers: [SocketService]
+  providers: []
 })
 export class ConferenceModule { }

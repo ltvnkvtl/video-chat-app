@@ -22,6 +22,8 @@ export class Server {
     private io!: SocketIOServer;
     private logger!: LoggerService;
 
+    private activeSockets: string[] = [];
+
     private readonly DEFAULT_PORT = process.env.PORT || 3030;
 
     constructor(socketConfig?: Partial<ServerOptions>) {
@@ -80,70 +82,52 @@ export class Server {
         });
 
         this.io.sockets.on('connection', (socket: Socket) => {
-            this.initLogger(socket);
-            this.logger.log('New socket connection ' + socket.id);
+          const existingSocket = this.activeSockets.find(
+            existingSocket => existingSocket === socket.id
+          );
 
-            shareRoomsInfo(this.io, socket);
+          if (!existingSocket) {
+            this.activeSockets.push(socket.id);
 
-            socket.on(ACTIONS.MESSAGE, (message: string) => {
-                this.logger.log('Client said: ', message);
-                socket.broadcast.emit(ACTIONS.MESSAGE, message);
+            socket.emit("update-user-list", {
+              users: this.activeSockets.filter(
+                existingSocket => existingSocket !== socket.id
+              )
             });
 
-            socket.on(ACTIONS.JOIN, (room: string) => {
-                this.logger.log('Received request to create or join room ' + room);
-                const joinedRooms = socket.rooms;
-
-                if(Array.from(joinedRooms).includes(room)) {
-                  return this.logger.warn(`Already joined to ${room}`);
-                }
-
-                const clientsInRoom = Array.from(this.io.sockets.adapter.rooms.get(room) || []);
-                const numClients = clientsInRoom.length;
-                this.logger.log('Room ' + room + ' now has ' + numClients + ' client(s)');
-
-                // notify members about new one
-                clientsInRoom.forEach(clientId => {
-                  this.io.to(clientId).emit(ACTIONS.ADD_PEER, {
-                    peerID: socket.id,
-                    createOffer: false,
-                  })
-
-                  socket.emit(ACTIONS.ADD_PEER, {
-                    peerID: clientId,
-                    createOffer: true,
-                  })
-                });
-
-                socket.join(room);
-                this.logger.log(`Client ID ${socket.id} ${(numClients === 0 ? 'created' : 'joined')} room: ${room}`);
-                shareRoomsInfo(this.io, socket);
+            socket.broadcast.emit("update-user-list", {
+              users: [socket.id]
             });
+          }
 
-            socket.on(ACTIONS.RELAY_SDP, ({ peerID, sessionDescription }) => {
-              this.io.to(peerID).emit(ACTIONS.SESSION_DESCRIPTION, {
-                peerID: socket.id,
-                sessionDescription,
-              })
-            })
-
-          socket.on(ACTIONS.RELAY_ICE, ({ peerID, iceCandidate }) => {
-            this.io.to(peerID).emit(ACTIONS.ICE_CANDIDATE, {
-              peerID: socket.id,
-              iceCandidate,
-            })
-          })
-
-            socket.on(ACTIONS.LEAVE, leaveRoom(this.io, socket));
-
-            socket.on('disconnect', function (reason: string) {
-                console.log(`Peer or server disconnected. Reason: ${reason}.`);
-                socket.broadcast.emit('bye');
+          socket.on("call-user", (data: any) => {
+            socket.to(data.to).emit("call-made", {
+              offer: data.offer,
+              socket: socket.id
             });
+          });
 
-            socket.on('bye', function (room: string) {
-                console.log(`Peer said bye on room ${room}.`);
+          socket.on("make-answer", data => {
+            socket.to(data.to).emit("answer-made", {
+              socket: socket.id,
+              answer: data.answer
             });
+          });
+
+          socket.on("reject-call", data => {
+            socket.to(data.from).emit("call-rejected", {
+              socket: socket.id
+            });
+          });
+
+          socket.on("disconnect", () => {
+            this.activeSockets = this.activeSockets.filter(
+              existingSocket => existingSocket !== socket.id
+            );
+            socket.broadcast.emit("remove-user", {
+              socketId: socket.id
+            });
+          });
         });
     }
 }
