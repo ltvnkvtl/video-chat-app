@@ -1,10 +1,12 @@
 import { NgModule } from '@angular/core';
 import {RouterModule, Routes} from "@angular/router";
-import {ConferenceComponent} from "./conference/conference.component";
+import {RoomComponent} from "./room/room.component";
 import {AuthGuard} from "../services/auth.guard";
+import {RoomsComponent} from "./rooms/rooms.component";
 
 const routes: Routes = [
-  { path: '', component: ConferenceComponent, canActivate: [AuthGuard] },
+  { path: '', component: RoomsComponent, canActivate: [AuthGuard] },
+  { path: ':id', component: RoomComponent, canActivate: [AuthGuard] },
 ]
 
 @NgModule({

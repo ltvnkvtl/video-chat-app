@@ -4,7 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   { path: '', redirectTo: 'auth', pathMatch: 'full' },
   { path: 'auth', loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule) },
-  { path: 'conference', loadChildren: () => import('./conference/conference.module').then(m => m.ConferenceModule) },
+  { path: 'rooms', loadChildren: () => import('./conference/conference.module').then(m => m.ConferenceModule) },
 ];
 
 @NgModule({

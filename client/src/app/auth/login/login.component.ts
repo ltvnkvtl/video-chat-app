@@ -19,7 +19,7 @@ export class LoginComponent {
     private router: Router,
     private authService: AuthService,
   ) {
-    this.returnUrl = this.route.snapshot.queryParams["returnUrl"] || '/conference';
+    this.returnUrl = this.route.snapshot.queryParams["returnUrl"] || '/room';
     this.form = this.fb.group({
       email: ['', [Validators.email, Validators.required]],
       password: ['', Validators.required]

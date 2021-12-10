@@ -13,6 +13,8 @@ import { errorMiddleware } from './middleware/error-middleware';
 import * as os from 'os';
 import { NetworkInterfaceInfo } from 'os';
 import { LoggerService } from './services/LoggerService';
+import {leaveRoom, shareRoomsInfo} from "./helper-functions/socket-helpers";
+import {ACTIONS} from "./models/socket-actions";
 
 export class Server {
     private httpServer!: HTTPServer;
@@ -71,59 +73,75 @@ export class Server {
         this.io = new SocketIOServer(this.httpServer, {
             connectTimeout: 10000,
             transports: ['websocket'],
+            cors: {
+              origin: "http://localhost:4200",
+              credentials: true
+            }
         });
 
         this.io.sockets.on('connection', (socket: Socket) => {
             this.initLogger(socket);
+            this.logger.log('New socket connection ' + socket.id);
 
-            socket.on('message', (message: string) => {
+            shareRoomsInfo(this.io, socket);
+
+            socket.on(ACTIONS.MESSAGE, (message: string) => {
                 this.logger.log('Client said: ', message);
-                socket.broadcast.emit('message', message);
+                socket.broadcast.emit(ACTIONS.MESSAGE, message);
             });
 
-            socket.on('create or join', (room: string) => {
+            socket.on(ACTIONS.JOIN, (room: string) => {
                 this.logger.log('Received request to create or join room ' + room);
+                const joinedRooms = socket.rooms;
 
-                const clientsInRoom = this.io.sockets.adapter.rooms.get(room);
-                const numClients = clientsInRoom ? clientsInRoom.size : 0; // : TODO Object.keys(clientsInRoom.sockets).length
+                if(Array.from(joinedRooms).includes(room)) {
+                  return this.logger.warn(`Already joined to ${room}`);
+                }
+
+                const clientsInRoom = Array.from(this.io.sockets.adapter.rooms.get(room) || []);
+                const numClients = clientsInRoom.length;
                 this.logger.log('Room ' + room + ' now has ' + numClients + ' client(s)');
 
-                if (numClients === 0) {
-                    socket.join(room);
-                    this.logger.log('Client ID ' + socket.id + ' created room ' + room);
-                    socket.emit('created', room, socket.id);
-                } else if (numClients === 1) {
-                    this.logger.log('Client ID ' + socket.id + ' joined room ' + room);
-                    // io.sockets.in(room).emit('join', room);
-                    socket.join(room);
-                    socket.emit('joined', room, socket.id);
-                    this.io.sockets.in(room).emit('ready', room);
-                    socket.broadcast.emit('ready', room);
-                } else {
-                    // : TODO max two clients, add more!!!
-                    socket.emit('full', room);
-                }
+                // notify members about new one
+                clientsInRoom.forEach(clientId => {
+                  this.io.to(clientId).emit(ACTIONS.ADD_PEER, {
+                    peerID: socket.id,
+                    createOffer: false,
+                  })
+
+                  socket.emit(ACTIONS.ADD_PEER, {
+                    peerID: clientId,
+                    createOffer: true,
+                  })
+                });
+
+                socket.join(room);
+                this.logger.log(`Client ID ${socket.id} ${(numClients === 0 ? 'created' : 'joined')} room: ${room}`);
+                shareRoomsInfo(this.io, socket);
             });
 
-            socket.on('ipaddr', () => {
-                const networkInfo = os.networkInterfaces();
-                for (const dev in networkInfo) {
-                    networkInfo![dev]!.forEach((details: NetworkInterfaceInfo) => {
-                        this.logger.warn(details);
-                        if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
-                            this.logger.debug(details);
-                            socket.emit('ipaddr', details.address);
-                        }
-                    });
-                }
-            });
+            socket.on(ACTIONS.RELAY_SDP, ({ peerID, sessionDescription }) => {
+              this.io.to(peerID).emit(ACTIONS.SESSION_DESCRIPTION, {
+                peerID: socket.id,
+                sessionDescription,
+              })
+            })
+
+          socket.on(ACTIONS.RELAY_ICE, ({ peerID, iceCandidate }) => {
+            this.io.to(peerID).emit(ACTIONS.ICE_CANDIDATE, {
+              peerID: socket.id,
+              iceCandidate,
+            })
+          })
+
+            socket.on(ACTIONS.LEAVE, leaveRoom(this.io, socket));
 
             socket.on('disconnect', function (reason: string) {
                 console.log(`Peer or server disconnected. Reason: ${reason}.`);
                 socket.broadcast.emit('bye');
             });
 
-            socket.on('bye', function (room: string | number) {
+            socket.on('bye', function (room: string) {
                 console.log(`Peer said bye on room ${room}.`);
             });
         });
