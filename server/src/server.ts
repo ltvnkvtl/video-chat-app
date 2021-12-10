@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { config } from 'dotenv';
 import express, { Application } from 'express';
 import cookieParser from 'cookie-parser';
-import { Server as SocketIOServer, ServerOptions } from 'socket.io';
+import { Server as SocketIOServer, ServerOptions, Socket } from 'socket.io';
 import { createServer, Server as HTTPServer } from 'http';
 import { serve, setup } from 'swagger-ui-express';
 
@@ -73,7 +73,7 @@ export class Server {
             transports: ['websocket'],
         });
 
-        this.io.sockets.on('connection', (socket: any) => {
+        this.io.sockets.on('connection', (socket: Socket) => {
             this.initLogger(socket);
 
             socket.on('message', (message: string) => {

@@ -1,8 +1,10 @@
+import {Socket} from "socket.io";
+
 export class LoggerService {
-    constructor(public socket: any) {}
+    constructor(public socket: Socket) {}
 
     public log(...args: any[]): void {
-        var array = ['Message from server:'];
+        const array = ['Log message from server:'];
         array.push.apply(array, args);
         console.log.apply(console, args);
 
@@ -10,7 +12,7 @@ export class LoggerService {
     }
 
     public warn(...args: any[]): void {
-        var array = ['Message from server:'];
+        const array = ['Warn message from server:'];
         array.push.apply(array, args);
         console.warn.apply(console, args);
 
@@ -18,7 +20,7 @@ export class LoggerService {
     }
 
     public error(...args: any[]): void {
-        var array = ['Message from server:'];
+        const array = ['Error message from server:'];
         array.push.apply(array, args);
         console.error.apply(console, args);
 
@@ -26,7 +28,7 @@ export class LoggerService {
     }
 
     public debug(...args: any[]): void {
-        var array = ['Message from server:'];
+        const array = ['Debug message from server:'];
         array.push.apply(array, args);
         console.debug.apply(console, args);
 
