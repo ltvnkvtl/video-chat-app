@@ -8,13 +8,12 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import {ConferenceRoutingModule} from "./conference-routing.module";
-import { RoomsComponent } from './rooms/rooms.component';
 import {MatCardModule} from "@angular/material/card";
 
 
 
 @NgModule({
-  declarations: [RoomComponent, RoomsComponent],
+  declarations: [RoomComponent],
   imports: [
     CommonModule,
     LayoutModule,

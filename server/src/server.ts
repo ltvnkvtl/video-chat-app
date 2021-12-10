@@ -82,13 +82,14 @@ export class Server {
         });
 
         this.io.sockets.on('connection', (socket: Socket) => {
+          this.initLogger(socket);
+
           const existingSocket = this.activeSockets.find(
             existingSocket => existingSocket === socket.id
           );
 
           if (!existingSocket) {
             this.activeSockets.push(socket.id);
-
             socket.emit("update-user-list", {
               users: this.activeSockets.filter(
                 existingSocket => existingSocket !== socket.id
@@ -98,9 +99,11 @@ export class Server {
             socket.broadcast.emit("update-user-list", {
               users: [socket.id]
             });
+            this.logger.log("update-user-list", this.activeSockets)
           }
 
           socket.on("call-user", (data: any) => {
+            this.logger.log("call-user", data)
             socket.to(data.to).emit("call-made", {
               offer: data.offer,
               socket: socket.id
@@ -108,6 +111,7 @@ export class Server {
           });
 
           socket.on("make-answer", data => {
+            this.logger.log("make-answer", data)
             socket.to(data.to).emit("answer-made", {
               socket: socket.id,
               answer: data.answer
@@ -115,12 +119,14 @@ export class Server {
           });
 
           socket.on("reject-call", data => {
+            this.logger.log("reject-call", data)
             socket.to(data.from).emit("call-rejected", {
               socket: socket.id
             });
           });
 
-          socket.on("disconnect", () => {
+          socket.on("disconnect", (reason) => {
+            this.logger.log("disconnect", reason)
             this.activeSockets = this.activeSockets.filter(
               existingSocket => existingSocket !== socket.id
             );

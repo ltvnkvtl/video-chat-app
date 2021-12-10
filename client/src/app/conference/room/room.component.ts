@@ -16,6 +16,7 @@ export class RoomComponent implements OnInit, AfterViewInit {
 
   constructor() {
     this.socket = io('http://localhost:3030', { transports: ["websocket"]});
+    this.socket.on('log', (data) => console.log(data));
   }
 
   public ngOnInit() {
